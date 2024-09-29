@@ -1,0 +1,263 @@
+local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDzHUB/RedzLibV5/main/Source.Lua"))()
+local localPlayer = game:GetService('Players').LocalPlayer
+local playerData = {}
+local playerESP
+local Window = redzlib:MakeWindow({
+	Title = "Lxchu's HUB",
+	SubTitle = "Current Game: Murder Mystery 2",
+	SaveFolder = "MurderMystery2Config"
+})
+function sendNotification(title, text, duration)
+	game:GetService('StarterGui'):SetCore('SendNotification', {
+		Title = title;
+		Text = text;
+		Duration = duration;
+	})
+end
+-- functions
+local function findMurderer()
+	for _, i in ipairs(game.Players:GetPlayers()) do
+		if i.Backpack:FindFirstChild("Knife") then
+			return i
+		end
+	end
+	for _, i in ipairs(game.Players:GetPlayers()) do
+		if not i.Character then continue end
+		if i.Character:FindFirstChild("Knife") then
+			return i
+		end
+	end
+	if playerData then
+		for player, data in playerData do
+			if data.Role == "Murderer" then
+				if game.Players:FindFirstChild(player) then
+					return game.Players:FindFirstChild(player)
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local function findSheriff()
+	for _, i in ipairs(game.Players:GetPlayers()) do
+		if i.Backpack:FindFirstChild("Gun") then
+			return i
+		end
+	end
+	for _, i in ipairs(game.Players:GetPlayers()) do
+		if not i.Character then continue end
+		if i.Character:FindFirstChild("Gun") then
+			return i
+		end
+	end
+	if playerData then
+		for player, data in playerData do
+			if data.Role == "Sheriff" then
+				if game.Players:FindFirstChild(player) then
+					return game.Players:FindFirstChild(player)
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local function findHero()
+	for _, i in ipairs(game.Players:GetPlayers()) do
+		if i == localPlayer then continue end
+		if i.Backpack:FindFirstChild("Gun") then
+			return i
+		end
+	end
+	for _, i in ipairs(game.Players:GetPlayers()) do
+		if i == localPlayer then continue end
+		if not i.Character then continue end
+		if i.Character:FindFirstChild("Gun") then
+			return i
+		end
+	end
+	if playerData then
+		for player, data in playerData do
+			if data.Role == "Sheriff" then
+				if game.Players:FindFirstChild(player) then
+					if game.Players:FindFirstChild(player) == localPlayer then continue end
+					return game.Players:FindFirstChild(player)
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local function loadESP(playerESP)
+	sendNotification("Map has loaded, waiting for roles...")
+	repeat
+		task.wait(1)
+	until findMurderer()
+	local listplayers = game.Players:GetChildren()
+	for _, player in ipairs(listplayers) do
+		if  player.Character ~= nil then
+			local character = player.Character
+			if not character:FindFirstChild("PlayerESP") then
+				local a = Instance.new("Highlight", script.Parent)
+				a.Name = "PlayerESP"
+				a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+				a.Adornee = character
+				a.FillColor = Color3.fromRGB(255, 255, 255)
+				a.FillTransparency = 0.5
+				task.spawn(function()
+					if player == findMurderer() then
+						local mbgui = script.Parent.MurdererBGUI:Clone()
+						mbgui.Enabled = true
+						mbgui.Name = "AppliedMurdererBGUI"
+						mbgui.Parent = _G.YARHM
+						mbgui.Adornee = character
+						a.FillColor = Color3.fromRGB(255,0,0)
+						a.OutlineColor = Color3.fromRGB(255,0,0)
+					elseif player == findSheriff() then
+
+						a.FillColor = Color3.fromRGB(0, 150, 255)
+						a.OutlineColor = Color3.fromRGB(0, 150, 255)
+					else
+						a.FillColor = Color3.fromRGB(0,255,0)
+						a.OutlineColor = Color3.fromRGB(0, 255, 0)
+					end
+					if a then
+						if not player then return end
+						a.Adornee = player.Character or player.CharactedAdded:Wait()
+					end
+				end)
+			end
+		end
+	end
+	sendNotification("Player ESP reloaded.")
+end
+
+local function gunESP(gunDropESP, ch)
+	if not script.Parent:FindFirstChild("GunESP") then
+		local gunesp = Instance.new("Highlight", script.Parent)
+		gunesp.OutlineTransparency = 1
+		gunesp.FillColor = Color3.fromRGB(255, 255, 0)
+		gunesp.Name = "GunESP"
+		gunesp.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		gunesp.Adornee = ch
+		gunesp.Enabled = true
+	end
+	script.Parent:FindFirstChild("GunESP").Adornee = ch
+	script.Parent:FindFirstChild("GunESP").Enabled = true
+	local bguiclone = script.Parent.DroppedGunBGUI:Clone()
+	bguiclone.Parent = script.Parent
+	bguiclone.Adornee = ch
+	bguiclone.Enabled = true
+	bguiclone.Name = "DGBGUIClone"
+	sendNotification("Gun has been dropped!")
+end
+
+local function reloadGunESP(gunDropESP, ch, playerESP)
+	if script.Parent:FindFirstChild("DGBGUIClone") then
+		script.Parent:FindFirstChild("DGBGUIClone"):Destroy()
+	end
+	if script.Parent:FindFirstChild("GunESP") then
+		script.Parent:FindFirstChild("GunESP"):Destroy()
+	end
+	sendNotification("Someone has took the dropped gun.")
+	task.wait(0.6)
+	sendNotification("The hero is " .. findSheriff().DisplayName .. ".")
+	if playerESP then
+		for _, v in ipairs(script.Parent:GetChildren()) do
+			if v:IsA("Highlight") then
+				v:Destroy()
+			end
+		end
+	end
+
+	local listplayers = game.Players:GetChildren()
+	for _, player in ipairs(listplayers) do
+		if  player.Character ~= nil then
+			local character = player.Character
+			if not character:FindFirstChild("PlayerESP") then
+				local a = Instance.new("Highlight", script.Parent)
+				a.Name = "PlayerESP"
+				a.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+				a.Adornee = character
+				a.FillColor = Color3.fromRGB(255, 255, 255)
+				a.FillTransparency = 0.5
+				task.spawn(function()
+					if player == findMurderer() then
+						local mbgui = script.Parent.MurdererBGUI:Clone()
+						mbgui.Enabled = true
+						mbgui.Name = "AppliedMurdererBGUI"
+						mbgui.Parent = _G.YARHM
+						mbgui.Adornee = character
+						a.FillColor = Color3.fromRGB(255,0,0)
+						a.OutlineColor = Color3.fromRGB(255,0,0)
+					elseif player == findSheriff() then
+						a.FillColor = Color3.fromRGB(255, 255,0)
+						a.OutlineColor = Color3.fromRGB(255, 255,0)
+					else
+						a.FillColor = Color3.fromRGB(0,255,0)
+						a.OutlineColor = Color3.fromRGB(0, 255, 0)
+					end
+					if a then
+						if not player then return end
+						a.Adornee = player.Character or player.CharactedAdded:Wait()
+					end
+				end)
+			end
+		end
+	end
+end
+
+local function removeESP(playerESP)
+	sendNotification("Game ended, removing Player ESPs.")
+	playerData = {}
+	if _G.YARHM:FindFirstChild("AppliedMurdererBGUI") then _G.YARHM:FindFirstChild("AppliedMurdererBGUI"):Destroy() end
+	if _G.YARHM:FindFirstChild("DGBGUIClone") then _G.YARHM:FindFirstChild("DGBGUIClone"):Destroy() end
+	for _, v in ipairs(script.Parent:GetChildren()) do if v.Name == "PlayerESP" then v:Destroy() end end
+end
+-- ui lib thingies
+local Tab1 = Window:MakeTab({"Main", " "})
+Tab1:AddButton({"Grab the Gun", function()
+	if not workspace.Normal:FindFirstChild("GunDrop") then sendNotification("Error!", "Someone else has the gun!", 2) return end
+	local previousPosition = localPlayer.Character:GetPivot()
+	localPlayer.Character:MoveTo(workspace.Normal:FindFirstChild("GunDrop").Position)
+	localPlayer.Backpack.ChildAdded:Wait()
+	localPlayer.Character:PivotTo(previousPosition)
+end})
+
+Tab1:AddToggle({
+	Name = "Player ESP",
+	Description = "Highlights on all the players and their roles.",
+	Default = false,
+	Callback = function(value)
+		workspace.ChildAdded:Connect(function(child)
+			if child.Name == 'Normal' and value then
+				loadESP()
+			end
+		end)
+		workspace.ChildRemoved:Connect(function(child)
+			if child.Name == 'Normal' and value then
+				removeESP()
+			end
+		end)
+	end,
+})
+
+Tab1:AddToggle({
+	Name = "Gun ESP",
+	Description = "Highlights the dropped gun.",
+	Default = false,
+	Callback = function(value)
+		workspace.DescendantAdded:Connect(function(ch)
+			if value and ch.Name == "GunDrop" then
+				gunESP(ch)
+			end
+		end)
+		workspace.DescendantRemoving:Connect(function(ch)
+			if value and ch.Name == "GunDrop" then
+				reloadGunESP(ch)
+			end
+		end)
+	end,
+})
